@@ -35,11 +35,18 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
         public async Task InitializeAsync()
         {
-            var exitCode = Microsoft.Playwright.Program.Main(new[] { "install" });
+            var exitCode = Microsoft.Playwright.Program.Main(new[] { "install-deps" });
             if (exitCode != 0)
             {
 #pragma warning disable CA2201 // Do not raise reserved exception types
-                throw new Exception($"Playwright exited with code {exitCode}");
+                throw new Exception($"Playwright exited with code {exitCode} on install-deps");
+#pragma warning restore CA2201 // Do not raise reserved exception types
+            }
+            exitCode = Microsoft.Playwright.Program.Main(new[] { "install" });
+            if (exitCode != 0)
+            {
+#pragma warning disable CA2201 // Do not raise reserved exception types
+                throw new Exception($"Playwright exited with code {exitCode} on install");
 #pragma warning restore CA2201 // Do not raise reserved exception types
             }
 
@@ -77,6 +84,9 @@ namespace SoloX.BlazorJsBlob.E2ETests
             {
                 var gotoResult = await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle }).ConfigureAwait(false);
                 gotoResult.Should().NotBeNull();
+
+                await gotoResult.FinishedAsync().ConfigureAwait(false);
+
                 gotoResult.Ok.Should().BeTrue();
 
                 await testHandler(page).ConfigureAwait(false);
