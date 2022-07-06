@@ -1,0 +1,79 @@
+﻿@page "/"
+
+
+@inject IBlobService BlobService
+@inject HttpClient HttpClient
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+<button @onclick="ClickCreateAsync">CreateBlob</button>
+
+@if (blob != null)
+{
+    <button @onclick="ClickSaveAsync">Save Blob</button>
+
+    <button @onclick="ClickDeleteAsync">Delete Blob</button>
+    
+    <div style="margin-top:10px">
+        <embed src="@blob.Uri" width="500" height="500" type="@blob.Type">
+    </div>
+}
+else if (loading)
+{
+    <div style="margin-top:10px">
+        <strong>Loading....</strong>
+    </div>
+}
+else
+{
+    <div style="margin-top:10px">
+        <strong>No blob to display!</strong>
+    </div>    
+}
+
+
+@code{
+    private IBlob blob = null;
+    private bool loading = false;
+
+    public async Task ClickCreateAsync()
+    {
+        loading = true;
+
+        if (blob != null)
+        {
+            await blob.DisposeAsync();
+            blob = null;
+
+            StateHasChanged();
+
+            await Task.Yield();
+        }
+
+        var stream = await HttpClient.GetStreamAsync(@"tropical-waterfall.jpg").ConfigureAwait(false);
+
+        blob = await BlobService.CreateBlobAsync(stream, "image/jpeg");
+        loading = false;
+    }
+
+    public async Task ClickSaveAsync()
+    {
+        if (blob != null)
+        {
+            await BlobService.SaveAsFileAsync(blob, "tropical-waterfall.jpg");
+        }
+    }
+
+    public async Task ClickDeleteAsync()
+    {
+        if (blob != null)
+        {
+            await blob.DisposeAsync();
+            blob = null;            
+        }
+    }
+}

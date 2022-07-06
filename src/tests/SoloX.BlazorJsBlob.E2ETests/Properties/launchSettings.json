@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "SoloX.BlazorJsBlob.E2ETests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:51932;http://localhost:51933"
+    }
+  }
+}
