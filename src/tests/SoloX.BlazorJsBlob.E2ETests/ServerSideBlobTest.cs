@@ -74,8 +74,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
                     var strong = page.Locator("strong", new PageLocatorOptions { HasTextString = "No blob to display!" });
 
-                    var count = await strong.CountAsync().ConfigureAwait(false);
-                    count.Should().Be(1);
+                    await strong.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible }).ConfigureAwait(false);
                 },
                 browserType).ConfigureAwait(false);
         }

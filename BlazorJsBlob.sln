@@ -8,9 +8,15 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{EAC86CF1-04C3-4396-9A4C-800C95D4B6F0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{979486A1-BA3A-4982-8CC1-FDAC32B1A0CD}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build-ci.yml = .github\workflows\build-ci.yml
+		.github\workflows\build-pr.yml = .github\workflows\build-pr.yml
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documents", "Documents", "{55E776A0-3804-49C5-A575-815217B59665}"
 	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
 		src\SharedProperties.props = src\SharedProperties.props
 	EndProjectSection
 EndProject
@@ -30,7 +36,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SoloX.BlazorJsBlob.Example.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SoloX.BlazorJsBlob.E2ETests", "src\tests\SoloX.BlazorJsBlob.E2ETests\SoloX.BlazorJsBlob.E2ETests.csproj", "{E5434333-F6E3-4F66-9C70-AC1E5EB63090}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoloX.BlazorJsBlob.E2EHost", "src\tests\SoloX.BlazorJsBlob.E2EHost\SoloX.BlazorJsBlob.E2EHost.csproj", "{CB804AA1-D2F3-4A4D-9801-EC3556910242}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SoloX.BlazorJsBlob.E2EHost", "src\tests\SoloX.BlazorJsBlob.E2EHost\SoloX.BlazorJsBlob.E2EHost.csproj", "{CB804AA1-D2F3-4A4D-9801-EC3556910242}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
