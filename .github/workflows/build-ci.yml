@@ -29,6 +29,7 @@ jobs:
       matrix:
         test_path:
           - src/tests/SoloX.BlazorJsBlob.UTests
+          - src/tests/SoloX.BlazorJsBlob.ITests
           #- src/tests/SoloX.BlazorJsBlob.E2ETests
 
     steps:

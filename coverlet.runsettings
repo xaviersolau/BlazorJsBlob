@@ -10,7 +10,7 @@
           <IncludeTestAssembly>false</IncludeTestAssembly>
           <SkipAutoProps>true</SkipAutoProps>
           <DeterministicReport>false</DeterministicReport>
-		  <Exclude>[SoloX.*.UTests]*,[SoloX.*.E2ETests]*,[SoloX.BlazorJsBlob.E2EHost]*, [SoloX.BlazorJsBlob.Example.*]*</Exclude>
+		  <Exclude>[SoloX.*.UTests]*,[SoloX.*.ITests]*,[SoloX.*.E2ETests]*,[SoloX.BlazorJsBlob.E2EHost]*, [SoloX.BlazorJsBlob.Example.*]*</Exclude>
         </Configuration>
       </DataCollector>
     </DataCollectors>
