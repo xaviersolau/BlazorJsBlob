@@ -148,6 +148,36 @@ namespace SoloX.BlazorJsBlob.UTests
         }
 
         [Fact]
+        public async Task ItShouldSaveAsJsBlobAsync()
+        {
+            var blobUrl = "blob://my.blob.url/";
+            var type = "application/json";
+            var fileName = "fileName.Json";
+
+            // Setup the stream to write to the JS Blob.
+            var bufferArray = SetupStreamcontent(1024);
+            await using var buffer = new MemoryStream(bufferArray);
+
+            var jsObjectReferenceMock = new Mock<IJSObjectReference>();
+
+            var blobMock = new Mock<IBlob>();
+            blobMock.SetupGet(b => b.Uri).Returns(new Uri(blobUrl));
+            blobMock.SetupGet(b => b.Type).Returns(type);
+
+            await using var service = SetupBlobService(1024, jsObjectReferenceMock);
+
+            await service.SaveAsFileAsync(blobMock.Object, fileName);
+
+            jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
+                    BlobService.SaveBlobAsFile,
+                    It.Is<object[]>(
+                        objs => objs.Length == 2
+                        && objs[0].ToString() == blobUrl
+                        && objs[1].ToString() == fileName)),
+                    Times.Once());
+        }
+
+        [Fact]
         public async Task ItShouldDeleteJsBlobOnDisposeAsync()
         {
             var blobUrl = "blob://my.blob.url/";
