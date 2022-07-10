@@ -6,6 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------
 
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -14,7 +15,7 @@ namespace SoloX.BlazorJsBlob
     /// <summary>
     /// Blob service interface.
     /// </summary>
-    public interface IBlobService
+    public interface IBlobService : IAsyncDisposable
     {
         /// <summary>
         /// Create a JS Blog from a given data stream.
