@@ -26,6 +26,9 @@ namespace SoloX.BlazorJsBlob.E2ETests
         [Theory]
         [InlineData(BrowserType.Chromium)]
         [InlineData(BrowserType.Firefox)]
+#if !DEBUG
+        [InlineData(BrowserType.Webkit)]
+#endif
         public async Task ItShouldCreateABlobAndSaveIt(BrowserType browserType)
         {
             var url = PlaywrightFixture.MakeUrl("localhost");
