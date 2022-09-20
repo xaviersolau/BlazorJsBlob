@@ -7,6 +7,7 @@
 // ----------------------------------------------------------------------
 
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Playwright;
 using System.Threading.Tasks;
 using Xunit;
@@ -24,18 +25,34 @@ namespace SoloX.BlazorJsBlob.E2ETests
         }
 
         [Theory]
-        [InlineData(BrowserType.Chromium)]
-        [InlineData(BrowserType.Firefox)]
+        [InlineData(Browser.Chromium)]
+        [InlineData(Browser.Firefox)]
 #if !DEBUG
-        [InlineData(BrowserType.Webkit)]
+        [InlineData(Browser.Webkit)]
 #endif
-        public async Task ItShouldCreateABlobAndSaveIt(BrowserType browserType)
+        public async Task ItShouldCreateABlobAndSaveIt(Browser browser)
         {
             var url = PlaywrightFixture.MakeUrl("localhost");
 
-            using var host = new WebHostTestFactory<WebHostTestProgram>(url);
+            // Create the host factory with the App class as parameter and the url we are going to use.
+            using var hostFactory = new WebTestingHostFactory<WebHostTestProgram>();
 
-            host.CreateDefaultClient();
+            hostFactory
+                // Override host configuration to mock stuff if required.
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.UseUrls(url);
+                    //builder.ConfigureServices(services =>
+                    //{
+                    //    services.AddTransient<IService, ServiceMock>();
+                    //})
+                    //.ConfigureAppConfiguration((app, conf) =>
+                    //{
+                    //    conf.AddJsonFile("appsettings.Test.json");
+                    //});
+                })
+                // Create the host using the CreateDefaultClient method.
+                .CreateDefaultClient();
 
             await this.playwrightFixture.GotoPageAsync(
                 url,
@@ -88,7 +105,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
                     var count = await strong.CountAsync().ConfigureAwait(false);
                     count.Should().Be(1);
                 },
-                browserType).ConfigureAwait(false);
+                browser).ConfigureAwait(false);
         }
     }
 }
