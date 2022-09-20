@@ -7,7 +7,9 @@
 // ----------------------------------------------------------------------
 
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Playwright;
+using SoloX.BlazorJsBlob.Example.ServerSide;
 using System.Buffers;
 using System.IO;
 using System.Threading.Tasks;
@@ -26,18 +28,32 @@ namespace SoloX.BlazorJsBlob.E2ETests
         }
 
         [Theory]
-        [InlineData(BrowserType.Chromium)]
-        [InlineData(BrowserType.Firefox)]
-#if !DEBUG
-        [InlineData(BrowserType.Webkit)]
-#endif
-        public async Task ItShouldCreateABlobAndSaveIt(BrowserType browserType)
+        [InlineData(Browser.Chromium)]
+        [InlineData(Browser.Firefox)]
+        [InlineData(Browser.Webkit)]
+        public async Task ItShouldCreateABlobAndSaveIt(Browser browser)
         {
             var url = PlaywrightFixture.MakeUrl("localhost");
 
-            using var host = new WebHostTestFactory<HostProgram>(url);
+            // Create the host factory with the App class as parameter and the url we are going to use.
+            using var hostFactory = new WebTestingHostFactory<App>();
 
-            host.CreateDefaultClient();
+            hostFactory
+                // Override host configuration to mock stuff if required.
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.UseUrls(url);
+                    //builder.ConfigureServices(services =>
+                    //{
+                    //    services.AddTransient<IService, ServiceMock>();
+                    //})
+                    //.ConfigureAppConfiguration((app, conf) =>
+                    //{
+                    //    conf.AddJsonFile("appsettings.Test.json");
+                    //});
+                })
+                // Create the host using the CreateDefaultClient method.
+                .CreateDefaultClient();
 
             await this.playwrightFixture.GotoPageAsync(
                 url,
@@ -79,7 +95,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
                     await strong.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible }).ConfigureAwait(false);
                 },
-                browserType).ConfigureAwait(false);
+                browser).ConfigureAwait(false);
         }
 
         internal static async Task<int> GetDownloadedSize(IDownload downloadedFile)
