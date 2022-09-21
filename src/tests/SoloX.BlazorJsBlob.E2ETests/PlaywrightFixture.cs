@@ -59,6 +59,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
             {
                 //Headless = false,
                 //SlowMo = 5000,
+                //Timeout = 60000,
             };
 
             // Create Playwright module.
@@ -97,21 +98,42 @@ namespace SoloX.BlazorJsBlob.E2ETests
         /// <param name="url">URL to navigate to.</param>
         /// <param name="testHandler">Test handler to apply on the page.</param>
         /// <param name="browserType">The Browser to use to open the page.</param>
+        /// <param name="retryCount">retry count in case of PlaywrightException.</param>
         /// <returns>The GotoPage task.</returns>
-        public async Task GotoPageAsync(string url, Func<IPage, Task> testHandler, Browser browserType = Browser.Chromium)
+        public async Task GotoPageAsync(string url, Func<IPage, Task> testHandler, Browser browserType = Browser.Chromium, int retryCount = 5)
+        {
+            var retry = retryCount;
+            while (retry > 0)
+            {
+                try
+                {
+                    await GotoPageInternalAsync(url, testHandler, browserType).ConfigureAwait(false);
+                    retry = 0;
+                }
+                catch (PlaywrightException)
+                {
+                    retry--;
+                    if (retry == 0)
+                    {
+                        throw;
+                    }
+                }
+            }
+        }
+
+        private async Task GotoPageInternalAsync(string url, Func<IPage, Task> testHandler, Browser browserType)
         {
             var browser = await SelectBrowserAsync(browserType).ConfigureAwait(false);
+            await using var context = await browser.NewContextAsync(new BrowserNewContextOptions { IgnoreHTTPSErrors = true }).ConfigureAwait(false);
 
-            var page = await browser.NewPageAsync(new BrowserNewPageOptions
-            {
-                IgnoreHTTPSErrors = true,
-            }).ConfigureAwait(false);
+            var page = await context.NewPageAsync().ConfigureAwait(false);
 
             page.Should().NotBeNull();
 
             try
             {
-                var gotoResult = await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle }).ConfigureAwait(false);
+                //await page.WaitForURLAsync(url, new PageWaitForURLOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }).ConfigureAwait(false);
+                var gotoResult = await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }).ConfigureAwait(false);
                 gotoResult.Should().NotBeNull();
 
                 await gotoResult.FinishedAsync().ConfigureAwait(false);
