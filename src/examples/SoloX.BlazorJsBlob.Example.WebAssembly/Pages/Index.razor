@@ -1,5 +1,6 @@
 ﻿@page "/"
 
+@* Inject the IBlobService *@
 @inject IBlobService BlobService
 @inject HttpClient HttpClient
 
@@ -11,7 +12,23 @@ Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
 
-<button @onclick="ClickCreateAsync">CreateBlob</button>
+<p>
+<a href="tropical-waterfall.jpg" download><button>Link to the file</button></a>
+</p>
+
+<p>
+<button @onclick="ClickSaveFromUrlAsync">Download Url</button>
+</p>
+
+<p>
+<button @onclick="ClickSaveFromDataUrlAsync">Save data Url</button>
+</p>
+
+<p>
+<button @onclick="ClickSaveFromBlobUrlAsync">Create and Save Url Blob</button>
+</p>
+
+<button @onclick="ClickCreateAsync">Create Blob</button>
 
 @if (blob != null)
 {
@@ -67,6 +84,33 @@ else
         {
             await BlobService.SaveAsFileAsync(blob, "tropical-waterfall.jpg");
         }
+    }
+
+    public async Task ClickSaveFromUrlAsync()
+    {
+        await BlobService.SaveAsFileAsync("tropical-waterfall.jpg");
+    }
+
+    public async Task ClickSaveFromBlobUrlAsync()
+    {
+        var stream = await HttpClient.GetStreamAsync(@"tropical-waterfall.jpg").ConfigureAwait(false);
+
+        await using var blob = await BlobService.CreateBlobAsync(stream, "image/jpeg");
+
+        await BlobService.SaveAsFileAsync(blob, "tropical-waterfall.jpg");
+    }
+
+    public async Task ClickSaveFromDataUrlAsync()
+    {
+        var stream = await HttpClient.GetStreamAsync(@"tropical-waterfall.jpg").ConfigureAwait(false);
+
+        var memBuffer = new MemoryStream();
+
+        await stream.CopyToAsync(memBuffer);
+
+        var b64 = Convert.ToBase64String(memBuffer.ToArray());
+
+        await BlobService.SaveAsFileAsync($"data:image/jpeg;base64," + b64, "tropical-waterfall.jpg");
     }
 
     public async Task ClickDeleteAsync()

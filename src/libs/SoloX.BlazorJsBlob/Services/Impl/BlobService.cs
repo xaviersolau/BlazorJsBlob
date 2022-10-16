@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SoloX.BlazorJsBlob.Services.Impl
@@ -18,7 +19,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
     /// <summary>
     /// Blob service that provides JS Blob storage access.
     /// </summary>
-    public class BlobService : IBlobService, IAsyncDisposable
+    public class BlobService : IBlobService
     {
         internal const string Ping = "blobManager.ping";
         internal const string Import = "import";
@@ -129,6 +130,45 @@ namespace SoloX.BlazorJsBlob.Services.Impl
             var module = await this.moduleTask.Value.ConfigureAwait(false);
 
             await module.InvokeVoidAsync(SaveBlobAsFile, blob.Uri.ToString(), fileName).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc/>
+        public async ValueTask SaveAsFileAsync(string href, string? fileName = null)
+        {
+            if (string.IsNullOrEmpty(href))
+            {
+                throw new ArgumentNullException(nameof(href));
+            }
+
+            // Get a file name if not provided
+            if (string.IsNullOrEmpty(fileName))
+            {
+                if (Uri.TryCreate(href, UriKind.RelativeOrAbsolute, out var uri) && uri.IsAbsoluteUri)
+                {
+                    // looks like this is an Url
+                    var localPath = uri.LocalPath;
+                    fileName = localPath.Split('/').LastOrDefault();
+                }
+                else
+                {
+                    fileName = href.Split('/').LastOrDefault();
+                }
+
+                if (string.IsNullOrEmpty(fileName))
+                {
+                    fileName = "Download_" + Guid.NewGuid().ToString();
+                }
+
+                // remove query parameters
+                if (fileName.Contains('?', StringComparison.Ordinal))
+                {
+                    fileName = fileName.Split('?').First();
+                }
+            }
+
+            var module = await this.moduleTask.Value.ConfigureAwait(false);
+
+            await module.InvokeVoidAsync(SaveBlobAsFile, href, fileName).ConfigureAwait(false);
         }
 
         private async ValueTask DisposeBlobAsync(Blob blob)

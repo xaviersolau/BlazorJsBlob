@@ -9,6 +9,7 @@
 using FluentAssertions;
 using Microsoft.Playwright;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -102,12 +103,19 @@ namespace SoloX.BlazorJsBlob.E2ETests
         /// <returns>The GotoPage task.</returns>
         public async Task GotoPageAsync(string url, Func<IPage, Task> testHandler, Browser browserType = Browser.Chromium, int retryCount = 5)
         {
+            var stackTrace = new StackTrace();
+
+            // since this is async/await frames, we must take the 7th
+            var frame = stackTrace.GetFrame(7);
+
+            var traceName = $"trace_{frame.GetMethod().DeclaringType.Name}_{frame.GetMethod().Name}_{Guid.NewGuid()}";
+
             var retry = retryCount;
             while (retry > 0)
             {
                 try
                 {
-                    await GotoPageInternalAsync(url, testHandler, browserType).ConfigureAwait(false);
+                    await GotoPageInternalAsync(url, testHandler, browserType, traceName).ConfigureAwait(false);
                     retry = 0;
                 }
                 catch (PlaywrightException)
@@ -121,10 +129,18 @@ namespace SoloX.BlazorJsBlob.E2ETests
             }
         }
 
-        private async Task GotoPageInternalAsync(string url, Func<IPage, Task> testHandler, Browser browserType)
+        private async Task GotoPageInternalAsync(string url, Func<IPage, Task> testHandler, Browser browserType, string traceName)
         {
             var browser = await SelectBrowserAsync(browserType).ConfigureAwait(false);
             await using var context = await browser.NewContextAsync(new BrowserNewContextOptions { IgnoreHTTPSErrors = true }).ConfigureAwait(false);
+
+            // Start tracing before creating the page.
+            await context.Tracing.StartAsync(new TracingStartOptions()
+            {
+                Screenshots = true,
+                Snapshots = true,
+                Sources = true
+            }).ConfigureAwait(false);
 
             var page = await context.NewPageAsync().ConfigureAwait(false);
 
@@ -132,7 +148,6 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
             try
             {
-                //await page.WaitForURLAsync(url, new PageWaitForURLOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }).ConfigureAwait(false);
                 var gotoResult = await page.GotoAsync(url, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }).ConfigureAwait(false);
                 gotoResult.Should().NotBeNull();
 
@@ -145,6 +160,12 @@ namespace SoloX.BlazorJsBlob.E2ETests
             finally
             {
                 await page.CloseAsync().ConfigureAwait(false);
+
+                // Stop tracing and save data into a zip archive.
+                await context.Tracing.StopAsync(new TracingStopOptions()
+                {
+                    Path = traceName + ".zip"
+                }).ConfigureAwait(false);
             }
         }
 
