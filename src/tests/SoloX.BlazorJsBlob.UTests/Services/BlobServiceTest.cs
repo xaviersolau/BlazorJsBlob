@@ -177,6 +177,30 @@ namespace SoloX.BlazorJsBlob.UTests
                     Times.Once());
         }
 
+        [Theory]
+        [InlineData("http://my.url/fileName.Json", "fileName.Json", "fileName.Json")]
+        [InlineData("http://my.url/fileName.Json", null, "fileName.Json")]
+        [InlineData("http://my.url/fileName.Json?var1=1&var2=2", null, "fileName.Json")]
+        [InlineData("fileName.Json", null, "fileName.Json")]
+        public async Task ItShouldSaveAsUrlAsync(string url, string fileName, string expectedFileName)
+        {
+            var type = "application/json";
+
+            var jsObjectReferenceMock = new Mock<IJSObjectReference>();
+
+            await using var service = SetupBlobService(1024, jsObjectReferenceMock);
+
+            await service.SaveAsFileAsync(url, fileName).ConfigureAwait(false);
+
+            jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
+                    BlobService.SaveBlobAsFile,
+                    It.Is<object[]>(
+                        objs => objs.Length == 2
+                        && objs[0].ToString() == url
+                        && objs[1].ToString() == expectedFileName)),
+                    Times.Once());
+        }
+
         [Fact]
         public async Task ItShouldDeleteJsBlobOnDisposeAsync()
         {

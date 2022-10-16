@@ -67,8 +67,8 @@ namespace SoloX.BlazorJsBlob.E2ETests
                         },
                     });
 
-                    // Click text=CreateBlob.
-                    await page.Locator("text=CreateBlob").ClickAsync().ConfigureAwait(false);
+                    // Click text=Create Blob.
+                    await page.Locator("text=Create Blob").ClickAsync().ConfigureAwait(false);
 
                     // Wait for image loaded from host.
                     await waitForRequestFinishedTask.ConfigureAwait(false);
@@ -104,6 +104,49 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
                     var count = await strong.CountAsync().ConfigureAwait(false);
                     count.Should().Be(1);
+                },
+                browser).ConfigureAwait(false);
+        }
+
+        [Theory]
+        [InlineData(Browser.Chromium)]
+        [InlineData(Browser.Firefox)]
+#if !DEBUG
+        [InlineData(Browser.Webkit)]
+#endif
+        public async Task ItShouldSaveUrlAsFile(Browser browser)
+        {
+            var url = PlaywrightFixture.MakeUrl("localhost", port: 5000);
+
+            // Create the host factory with the App class as parameter and the url we are going to use.
+            using var hostFactory = new WebTestingHostFactory<WebHostTestProgram>();
+
+            hostFactory
+                // Override host configuration to mock stuff if required.
+                .WithWebHostBuilder(builder =>
+                {
+                    builder.UseUrls(url);
+                })
+                // Create the host using the CreateDefaultClient method.
+                .CreateDefaultClient();
+
+            await this.playwrightFixture.GotoPageAsync(
+                url,
+                async (page) =>
+                {
+                    // Click text=Save Url.
+                    var downloadedFile = await page.RunAndWaitForDownloadAsync(async () =>
+                    {
+                        await page.Locator("text=Download Url").ClickAsync().ConfigureAwait(false);
+                    }).ConfigureAwait(false);
+
+                    downloadedFile.Should().NotBeNull();
+                    downloadedFile.SuggestedFilename.Should().StartWith("tropical-waterfall").And.EndWith(".jpg");
+
+                    downloadedFile.Url.Should().Be("https://localhost:5000/tropical-waterfall.jpg");
+
+                    var size = await ServerSideBlobTest.GetDownloadedSize(downloadedFile).ConfigureAwait(false);
+                    size.Should().Be(2959153);
                 },
                 browser).ConfigureAwait(false);
         }

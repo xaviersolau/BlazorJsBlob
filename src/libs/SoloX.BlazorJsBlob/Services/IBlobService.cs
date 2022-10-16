@@ -32,5 +32,13 @@ namespace SoloX.BlazorJsBlob
         /// <param name="fileName">The file name to save.</param>
         /// <returns>The saving task.</returns>
         ValueTask SaveAsFileAsync(IBlob blob, string fileName);
+
+        /// <summary>
+        /// Save the given URL as file.
+        /// </summary>
+        /// <param name="href">The URL to save.</param>
+        /// <param name="fileName">The file name to save.</param>
+        /// <returns>The saving task.</returns>
+        ValueTask SaveAsFileAsync(string href, string? fileName = null);
     }
 }

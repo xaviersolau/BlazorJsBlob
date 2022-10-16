@@ -27,17 +27,17 @@ You can checkout this Github repository or you can use the NuGet packages:
 
 **Install using the command line from the Package Manager:**
 ```bash
-Install-Package SoloX.BlazorJsBlob -version 1.0.0-alpha.1
+Install-Package SoloX.BlazorJsBlob -version 1.0.0
 ```
 
 **Install using the .Net CLI:**
 ```bash
-dotnet add package SoloX.BlazorJsBlob --version 1.0.0-alpha.1
+dotnet add package SoloX.BlazorJsBlob --version 1.0.0
 ```
 
 **Install editing your project file (csproj):**
 ```xml
-<PackageReference Include="SoloX.BlazorJsBlob" Version="1.0.0-alpha.1" />
+<PackageReference Include="SoloX.BlazorJsBlob" Version="1.0.0" />
 ```
 
 ## How to use it
@@ -119,7 +119,7 @@ The Blob object provides two useful property:
 ### Save the JavaScript Blob as a file
 
 In the case where you need to save the data stored in your Blob, here is a really easy way: you can just use the `IBlobService`
-and call the method `SaveAsFileAsync`.
+and call the method `SaveAsFileAsync` with the Blob as parameter.
 
 ```csharp
 // Let's say that we have a Blob created.
@@ -127,4 +127,17 @@ await using var blob = await BlobService.CreateBlobAsync(/*...*/);
 
 // Nothing more to do than calling the SaveAsFileAsync method.
 await BlobService.SaveAsFileAsync(blob, "some_file_name.jpg");
+```
+
+### Save an url file as a file
+
+In the case where you need to save the data stored in a given Url location, you can just use the `IBlobService`
+and call the method `SaveAsFileAsync` with the target URL as parameter.
+
+```csharp
+// Let's say that we have an Url.
+var url = "https://host/some_file_name.jpg";
+
+// Nothing more to do than calling the SaveAsFileAsync method.
+await BlobService.SaveAsFileAsync(url, "some_file_name.jpg");
 ```
