@@ -1,7 +1,7 @@
 <Project>
 
   <PropertyGroup>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Xavier Solau</Authors>
     <Copyright>Copyright © 2022 Xavier Solau</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -15,9 +15,12 @@
     <CodeQualityHeaderLicenseFile>LICENSE</CodeQualityHeaderLicenseFile>
 
     <CodeQualityUpdateGitIgnore>true</CodeQualityUpdateGitIgnore>
+    <CodeQualityLoggerUseDisabled>true</CodeQualityLoggerUseDisabled>
 
     <Nullable>enable</Nullable>
 
+    <NoWarn>$(NoWarn),CA1054,CA1055</NoWarn>
+	  
   </PropertyGroup>
 
 </Project>

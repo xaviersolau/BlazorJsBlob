@@ -132,7 +132,8 @@ namespace SoloX.BlazorJsBlob.E2ETests
         private async Task GotoPageInternalAsync(string url, Func<IPage, Task> testHandler, Browser browserType, string traceName)
         {
             var browser = await SelectBrowserAsync(browserType).ConfigureAwait(false);
-            await using var context = await browser.NewContextAsync(new BrowserNewContextOptions { IgnoreHTTPSErrors = true }).ConfigureAwait(false);
+            var context = await browser.NewContextAsync(new BrowserNewContextOptions { IgnoreHTTPSErrors = true }).ConfigureAwait(false);
+            await using var _ = context.ConfigureAwait(false);
 
             // Start tracing before creating the page.
             await context.Tracing.StartAsync(new TracingStartOptions()

@@ -35,7 +35,8 @@ namespace SoloX.BlazorJsBlob.ITests
 
             services.AddJsBlob();
 
-            await using var serviceProvider = services.BuildServiceProvider();
+            var serviceProvider = services.BuildServiceProvider();
+            await using var _ = serviceProvider.ConfigureAwait(false);
 
             var blobService = serviceProvider.GetRequiredService<IBlobService>();
 

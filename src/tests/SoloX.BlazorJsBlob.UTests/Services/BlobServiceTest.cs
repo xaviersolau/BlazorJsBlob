@@ -53,7 +53,8 @@ namespace SoloX.BlazorJsBlob.UTests
 
             // Setup the stream to write to the JS Blob.
             var bufferArray = SetupStreamcontent(bufferSize);
-            await using var buffer = new MemoryStream(bufferArray);
+            var buffer = new MemoryStream(bufferArray);
+            await using var _ = buffer.ConfigureAwait(false);
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
 
@@ -92,9 +93,11 @@ namespace SoloX.BlazorJsBlob.UTests
                     It.Is<object[]>(objs => objs.Length == 2 && Guid.Parse(objs[0].ToString()) == blobId && type.Equals(objs[1]))))
                 .ReturnsAsync(blobUrl);
 
-            await using var service = SetupBlobService(sliceBufferSize, jsObjectReferenceMock);
+            var service = SetupBlobService(sliceBufferSize, jsObjectReferenceMock);
+            await using var _1 = service.ConfigureAwait(false);
 
-            await using var blob = await service.CreateBlobAsync(buffer, type).ConfigureAwait(false);
+            var blob = await service.CreateBlobAsync(buffer, type).ConfigureAwait(false);
+            await using var _2 = blob.ConfigureAwait(false);
 
             // Make sure the buffer is created and a Guid has been defined
             blobId.Should().NotBe(Guid.Empty);
@@ -156,7 +159,8 @@ namespace SoloX.BlazorJsBlob.UTests
 
             // Setup the stream to write to the JS Blob.
             var bufferArray = SetupStreamcontent(1024);
-            await using var buffer = new MemoryStream(bufferArray);
+            var buffer = new MemoryStream(bufferArray);
+            await using var _1 = buffer.ConfigureAwait(false);
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
 
@@ -164,9 +168,10 @@ namespace SoloX.BlazorJsBlob.UTests
             blobMock.SetupGet(b => b.Uri).Returns(new Uri(blobUrl));
             blobMock.SetupGet(b => b.Type).Returns(type);
 
-            await using var service = SetupBlobService(1024, jsObjectReferenceMock);
+            var service = SetupBlobService(1024, jsObjectReferenceMock);
+            await using var _2 = service.ConfigureAwait(false);
 
-            await service.SaveAsFileAsync(blobMock.Object, fileName);
+            await service.SaveAsFileAsync(blobMock.Object, fileName).ConfigureAwait(false);
 
             jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
                     BlobService.SaveBlobAsFile,
@@ -188,7 +193,8 @@ namespace SoloX.BlazorJsBlob.UTests
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
 
-            await using var service = SetupBlobService(1024, jsObjectReferenceMock);
+            var service = SetupBlobService(1024, jsObjectReferenceMock);
+            await using var _ = service.ConfigureAwait(false);
 
             await service.SaveAsFileAsync(url, fileName).ConfigureAwait(false);
 
@@ -209,7 +215,8 @@ namespace SoloX.BlazorJsBlob.UTests
 
             // Setup the stream to write to the JS Blob.
             var bufferArray = SetupStreamcontent(1024);
-            await using var buffer = new MemoryStream(bufferArray);
+            var buffer = new MemoryStream(bufferArray);
+            await using var _1 = buffer.ConfigureAwait(false);
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
 
@@ -220,7 +227,8 @@ namespace SoloX.BlazorJsBlob.UTests
                     It.Is<object[]>(objs => objs.Length == 2 && Guid.Parse(objs[0].ToString()) != Guid.Empty && type.Equals(objs[1]))))
                 .ReturnsAsync(blobUrl);
 
-            await using var service = SetupBlobService(1024, jsObjectReferenceMock);
+            var service = SetupBlobService(1024, jsObjectReferenceMock);
+            await using var _2 = service.ConfigureAwait(false);
 
             var blob = await service.CreateBlobAsync(buffer, type).ConfigureAwait(false);
 
