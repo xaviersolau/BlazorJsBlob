@@ -36,7 +36,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
         }
 
         // Relay the call to both test host and kestrel host.
-        private class CompositeHost : IHost
+        private sealed class CompositeHost : IHost
         {
             private readonly IHost testHost;
             private readonly IHost kestrelHost;
@@ -59,18 +59,18 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
             public async Task StartAsync(CancellationToken cancellationToken = default)
             {
-                await this.testHost.StartAsync(cancellationToken);
+                await this.testHost.StartAsync(cancellationToken).ConfigureAwait(false);
 
                 // Relay the call to kestrel host.
-                await this.kestrelHost.StartAsync(cancellationToken);
+                await this.kestrelHost.StartAsync(cancellationToken).ConfigureAwait(false);
             }
 
             public async Task StopAsync(CancellationToken cancellationToken = default)
             {
-                await this.testHost.StopAsync(cancellationToken);
+                await this.testHost.StopAsync(cancellationToken).ConfigureAwait(false);
 
                 // Relay the call to kestrel host.
-                await this.kestrelHost.StopAsync(cancellationToken);
+                await this.kestrelHost.StopAsync(cancellationToken).ConfigureAwait(false);
             }
         }
     }
