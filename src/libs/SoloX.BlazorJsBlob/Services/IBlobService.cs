@@ -20,10 +20,18 @@ namespace SoloX.BlazorJsBlob
         /// <summary>
         /// Create a JS Blog from a given data stream.
         /// </summary>
-        /// <param name="dataStream">The data stream to setup the blob with.</param>
+        /// <param name="dataStream">The source data stream to copy to the blob.</param>
         /// <param name="type">MIME type.</param>
         /// <returns>The created Blob.</returns>
         ValueTask<IBlob> CreateBlobAsync(Stream dataStream, string type = "application/octet-stream");
+
+        /// <summary>
+        /// Create a JS Blog using a delegate with a stream where to write the data.
+        /// </summary>
+        /// <param name="writer">Writer delegate that will write the data to the blob stream.</param>
+        /// <param name="type">MIME type.</param>
+        /// <returns>The created Blob.</returns>
+        ValueTask<IBlob> CreateBlobAsync(Func<Stream, ValueTask> writer, string type = "application/octet-stream");
 
         /// <summary>
         /// Save the given blob as file.
