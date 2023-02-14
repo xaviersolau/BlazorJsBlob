@@ -21,29 +21,11 @@ namespace SoloX.BlazorJsBlob.Services.Impl
     /// </summary>
     public class BlobService : IBlobService
     {
-        internal const string Ping = "blobManager.ping";
         internal const string Import = "import";
         internal const string BlobManagerJsInteropFile = "./_content/SoloX.BlazorJsBlob/JsBlobInterop.js";
 
-#if NET6_0_OR_GREATER
-        /// <remark>
-        /// Since .Net 6.0 IJSRuntime can directly use byte array without base 64 conversion: On JS side we get a Uint8Array.
-        /// </remark>
-        internal const string AddToBuffer = "blobManager.addToBuffer";
-#else
-        /// <remark>
-        /// Before .Net 6.0 IJSRuntime needed to convert byte array to base 64: On JS side we get a Base64-encoded string.
-        /// </remark>
-        internal const string AddToBuffer = "blobManager.addToBufferB64";
-#endif
+        private readonly Lazy<Task<IModuleStrategy>> moduleStrategyTask;
 
-        internal const string CreateBuffer = "blobManager.createBuffer";
-        internal const string DeleteBuffer = "blobManager.deleteBuffer";
-        internal const string CreateBlob = "blobManager.createBlob";
-        internal const string DeleteBlob = "blobManager.deleteBlob";
-        internal const string SaveBlobAsFile = "blobManager.saveAsFile";
-
-        private readonly Lazy<Task<IJSObjectReference>> moduleTask;
         private readonly BlobServiceOptions options;
         private readonly IBufferService bufferService;
         private readonly ILogger<BlobService> logger;
@@ -66,8 +48,22 @@ namespace SoloX.BlazorJsBlob.Services.Impl
             this.bufferService = bufferService;
             this.logger = logger;
 
-            this.moduleTask = new Lazy<Task<IJSObjectReference>>(
-                () => jsRuntime.InvokeAsync<IJSObjectReference>(Import, BlobManagerJsInteropFile).AsTask());
+            if (jsRuntime is IJSInProcessRuntime jsInProcessRuntime)
+            {
+                this.moduleStrategyTask = new Lazy<Task<IModuleStrategy>>(async () =>
+                {
+                    var module = await jsRuntime.InvokeAsync<IJSInProcessObjectReference>(Import, BlobManagerJsInteropFile).ConfigureAwait(false);
+                    return new InProcessModuleStrategy(module, this.options, this.bufferService, this.logger);
+                });
+            }
+            else
+            {
+                this.moduleStrategyTask = new Lazy<Task<IModuleStrategy>>(async () =>
+                {
+                    var module = await jsRuntime.InvokeAsync<IJSObjectReference>(Import, BlobManagerJsInteropFile).ConfigureAwait(false);
+                    return new ModuleStrategy(module, this.options, this.bufferService, this.logger);
+                });
+            }
         }
 
         /// <inheritdoc/>
@@ -78,45 +74,33 @@ namespace SoloX.BlazorJsBlob.Services.Impl
                 throw new ArgumentNullException(nameof(dataStream));
             }
 
+            return await CreateBlobAsync(
+                async writeStream =>
+                {
+                    await dataStream.CopyToAsync(writeStream).ConfigureAwait(false);
+                },
+                type).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc/>
+        public async ValueTask<IBlob> CreateBlobAsync(Func<Stream, ValueTask> writer, string type)
+        {
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
             this.logger.LogInformation($"Create Blob with type {type}");
 
-            var bufferGuid = Guid.NewGuid().ToString();
+            var bufferGuid = Guid.NewGuid();
 
-            var bufferArray = this.bufferService.Rent(this.options.SliceBufferSize);
+            var moduleStrategy = await this.moduleStrategyTask.Value.ConfigureAwait(false);
 
-            var module = await this.moduleTask.Value.ConfigureAwait(false);
+            var blob = await moduleStrategy.CreateBlobAsync(bufferGuid, type, writer).ConfigureAwait(false);
 
-            try
-            {
-                var res = await module.InvokeAsync<bool>(Ping).ConfigureAwait(false);
+            this.logger.LogInformation($"Blob with type {type} created");
 
-                await module.InvokeVoidAsync(CreateBuffer, bufferGuid).ConfigureAwait(false);
-
-                var buffer = new Memory<byte>(bufferArray);
-
-                var size = await dataStream.ReadAsync(buffer).ConfigureAwait(false);
-                var totalSize = size;
-
-                while (size > 0)
-                {
-                    await module.InvokeVoidAsync(AddToBuffer, bufferGuid, bufferArray, size).ConfigureAwait(false);
-
-                    size = await dataStream.ReadAsync(buffer).ConfigureAwait(false);
-                    totalSize += size;
-                }
-
-                var blobUrl = await module.InvokeAsync<string>(CreateBlob, bufferGuid, type).ConfigureAwait(false);
-
-                await module.InvokeVoidAsync(DeleteBuffer, bufferGuid).ConfigureAwait(false);
-
-                this.logger.LogInformation($"Blob with type {type} created (size: {totalSize} bytes)");
-
-                return new Blob(this, blobUrl, type);
-            }
-            finally
-            {
-                this.bufferService.Return(bufferArray);
-            }
+            return blob;
         }
 
         /// <inheritdoc/>
@@ -127,9 +111,9 @@ namespace SoloX.BlazorJsBlob.Services.Impl
                 throw new ArgumentNullException(nameof(blob));
             }
 
-            var module = await this.moduleTask.Value.ConfigureAwait(false);
+            var moduleStrategy = await this.moduleStrategyTask.Value.ConfigureAwait(false);
 
-            await module.InvokeVoidAsync(SaveBlobAsFile, blob.Uri.ToString(), fileName).ConfigureAwait(false);
+            await moduleStrategy.SaveAsFileAsync(blob, fileName).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -166,58 +150,18 @@ namespace SoloX.BlazorJsBlob.Services.Impl
                 }
             }
 
-            var module = await this.moduleTask.Value.ConfigureAwait(false);
+            var moduleStrategy = await this.moduleStrategyTask.Value.ConfigureAwait(false);
 
-            await module.InvokeVoidAsync(SaveBlobAsFile, href, fileName).ConfigureAwait(false);
-        }
-
-        private async ValueTask DisposeBlobAsync(Blob blob)
-        {
-            var module = await this.moduleTask.Value.ConfigureAwait(false);
-
-            await module.InvokeVoidAsync(DeleteBlob, blob.Uri.ToString()).ConfigureAwait(false);
-        }
-
-        private class Blob : IBlob
-        {
-            private readonly BlobService blobService;
-
-            public Blob(BlobService blobService, string blobUrl, string type)
-            {
-                this.blobService = blobService;
-                Uri = new Uri(blobUrl);
-                Type = type;
-            }
-
-            public Uri Uri { get; }
-
-            public string Type { get; }
-
-            public ValueTask DisposeAsync()
-            {
-                return this.blobService.DisposeBlobAsync(this);
-            }
+            await moduleStrategy.SaveAsFileAsync(href, fileName).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async ValueTask DisposeAsync()
         {
-            if (this.moduleTask.IsValueCreated)
+            if (this.moduleStrategyTask.IsValueCreated)
             {
-                var module = await this.moduleTask.Value.ConfigureAwait(false);
-
-                try
-                {
-                    // make sure JS runtime is steel responding otherwise disposing the module may block forever.
-                    await module.InvokeAsync<bool>(Ping,
-                        TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
-
-                    await module.DisposeAsync().ConfigureAwait(false);
-                }
-                catch (TaskCanceledException e)
-                {
-                    this.logger.LogDebug(e.Message);
-                }
+                var moduleStrategy = await this.moduleStrategyTask.Value.ConfigureAwait(false);
+                await moduleStrategy.DisposeAsync().ConfigureAwait(false);
             }
 
             GC.SuppressFinalize(this);
