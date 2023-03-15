@@ -27,17 +27,17 @@ You can checkout this Github repository or you can use the NuGet packages:
 
 **Install using the command line from the Package Manager:**
 ```bash
-Install-Package SoloX.BlazorJsBlob -version 1.0.1
+Install-Package SoloX.BlazorJsBlob -version 1.0.2
 ```
 
 **Install using the .Net CLI:**
 ```bash
-dotnet add package SoloX.BlazorJsBlob --version 1.0.1
+dotnet add package SoloX.BlazorJsBlob --version 1.0.2
 ```
 
 **Install editing your project file (csproj):**
 ```xml
-<PackageReference Include="SoloX.BlazorJsBlob" Version="1.0.1" />
+<PackageReference Include="SoloX.BlazorJsBlob" Version="1.0.2" />
 ```
 
 ## How to use it
