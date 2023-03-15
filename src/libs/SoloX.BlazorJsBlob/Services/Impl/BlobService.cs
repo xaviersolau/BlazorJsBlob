@@ -53,7 +53,12 @@ namespace SoloX.BlazorJsBlob.Services.Impl
                 this.moduleStrategyTask = new Lazy<Task<IModuleStrategy>>(async () =>
                 {
                     var module = await jsRuntime.InvokeAsync<IJSInProcessObjectReference>(Import, BlobManagerJsInteropFile).ConfigureAwait(false);
-                    return new InProcessModuleStrategy(module, this.options, this.bufferService, this.logger);
+
+                    var strategy = new InProcessModuleStrategy(module, this.options, this.bufferService, this.logger);
+
+                    await strategy.SetupJsLogsAsync().ConfigureAwait(false);
+
+                    return strategy;
                 });
             }
             else
@@ -61,7 +66,12 @@ namespace SoloX.BlazorJsBlob.Services.Impl
                 this.moduleStrategyTask = new Lazy<Task<IModuleStrategy>>(async () =>
                 {
                     var module = await jsRuntime.InvokeAsync<IJSObjectReference>(Import, BlobManagerJsInteropFile).ConfigureAwait(false);
-                    return new ModuleStrategy(module, this.options, this.bufferService, this.logger);
+
+                    var strategy = new ModuleStrategy(module, this.options, this.bufferService, this.logger);
+
+                    await strategy.SetupJsLogsAsync().ConfigureAwait(false);
+
+                    return strategy;
                 });
             }
         }

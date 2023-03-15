@@ -9,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
-builder.Services.AddJsBlob();
+builder.Services.AddJsBlob(
+    opt =>
+    {
+        opt.EnableJsModuleLogs = true;
+    });
 
 var app = builder.Build();
 
