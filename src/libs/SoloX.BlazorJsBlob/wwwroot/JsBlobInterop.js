@@ -4,11 +4,18 @@ class BlobManager {
 
   constructor() {
     this.buffers = {};
+    this.enableLogsOption = false;
+  }
+
+  enableLogs(enable) {
+    this.enableLogsOption = enable;
+
+    this.#consoleLog('enable logs: ' + enable)
   }
 
   // Create a buffer entry with the given Id.
   createBuffer(bufferId) {
-    console.log('create buffer: ' + bufferId)
+    this.#consoleLog('create buffer: ' + bufferId)
     this.buffers[bufferId] = {
       slices: []
     };
@@ -16,7 +23,7 @@ class BlobManager {
 
   // Add a data slice to the buffer associated to the given bufferId.
   addToBuffer(bufferId, dataSlice, size) {
-    console.log('add slice to buffer: ' + dataSlice.length + ' ' + size)
+    this.#consoleLog('add slice to buffer: ' + dataSlice.length + ' ' + size)
     if (dataSlice.length != size) {
       this.buffers[bufferId].slices.push(dataSlice.subarray(0, size));
     } else {
@@ -38,13 +45,13 @@ class BlobManager {
 
   // Delete the buffer associated to the given bufferId.
   deleteBuffer(bufferId) {
-    console.log('delete buffer: ' + bufferId)
+    this.#consoleLog('delete buffer: ' + bufferId)
     delete this.buffers[bufferId];
   }
 
   // Create a Blob from the buffer associated to the given bufferId.
   createBlob(bufferId, type) {
-    console.log('create blob from buffer id: ' + bufferId)
+    this.#consoleLog('create blob from buffer id: ' + bufferId)
     var bufferByteArrays = this.buffers[bufferId].slices;
 
     var blob = new Blob(bufferByteArrays, { type: type });
@@ -54,13 +61,13 @@ class BlobManager {
 
   // Delete Blob matching the blobUrl.
   deleteBlob(blobUrl) {
-    console.log('delete blob ' + blobUrl)
+    this.#consoleLog('delete blob ' + blobUrl)
     URL.revokeObjectURL(blobUrl);
   }
 
   // Save a Blob matching the blobUrl.
   saveAsFile(blobUrl, filename) {
-    console.log('save blob: ' + blobUrl)
+    this.#consoleLog('save blob: ' + blobUrl)
     var link = document.createElement('a');
     link.download = filename;
 
@@ -73,10 +80,15 @@ class BlobManager {
 
   // ping method to tell Blazor world that JS interoperability is alive.
   ping() {
-    console.log('ping')
+    this.#consoleLog('ping')
     return true;
   }
 
+  #consoleLog(message) {
+    if (this.enableLogsOption) {
+      console.log(message);
+    }
+  }
 }
 
 export var blobManager = new BlobManager();

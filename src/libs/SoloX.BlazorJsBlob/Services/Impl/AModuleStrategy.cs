@@ -37,6 +37,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         internal const string CreateBlob = "blobManager.createBlob";
         internal const string DeleteBlob = "blobManager.deleteBlob";
         internal const string SaveBlobAsFile = "blobManager.saveAsFile";
+        internal const string EnableLogs = "blobManager.enableLogs";
         internal const string Ping = "blobManager.ping";
 
         private readonly BlobServiceOptions options;
@@ -131,6 +132,15 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <param name="bufferGuid"></param>
         /// <returns></returns>
         protected abstract Stream CreateStream(IBufferService bufferService, int sliceBufferSize, string bufferGuid);
+
+        /// <summary>
+        /// Setup JS module logs.
+        /// </summary>
+        /// <returns>the asynchronous task.</returns>
+        internal ValueTask SetupJsLogsAsync()
+        {
+            return Module.InvokeVoidAsync(EnableLogs, this.options.EnableJsModuleLogs);
+        }
 
         /// <inheritdoc/>
         public async ValueTask DisposeAsync()

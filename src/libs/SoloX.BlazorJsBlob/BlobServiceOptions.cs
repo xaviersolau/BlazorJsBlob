@@ -19,5 +19,10 @@ namespace SoloX.BlazorJsBlob
         /// Gets/Sets slice buffer size.
         /// </summary>
         public int SliceBufferSize { get; set; } = DefaultBufferSize;
+
+        /// <summary>
+        /// Enable Js module to log traces in browser console.
+        /// </summary>
+        public bool EnableJsModuleLogs { get; set; }
     }
 }
