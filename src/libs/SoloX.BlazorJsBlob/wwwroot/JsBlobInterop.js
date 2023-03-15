@@ -2,13 +2,11 @@
 
 class BlobManager {
 
-  constructor() {
-    this.buffers = {};
-    this.enableLogsOption = false;
-  }
+  #buffers = {};
+  #enableLogsOption = false;
 
   enableLogs(enable) {
-    this.enableLogsOption = enable;
+    this.#enableLogsOption = enable;
 
     this.#consoleLog('enable logs: ' + enable)
   }
@@ -16,7 +14,7 @@ class BlobManager {
   // Create a buffer entry with the given Id.
   createBuffer(bufferId) {
     this.#consoleLog('create buffer: ' + bufferId)
-    this.buffers[bufferId] = {
+    this.#buffers[bufferId] = {
       slices: []
     };
   }
@@ -25,9 +23,9 @@ class BlobManager {
   addToBuffer(bufferId, dataSlice, size) {
     this.#consoleLog('add slice to buffer: ' + dataSlice.length + ' ' + size)
     if (dataSlice.length != size) {
-      this.buffers[bufferId].slices.push(dataSlice.subarray(0, size));
+      this.#buffers[bufferId].slices.push(dataSlice.subarray(0, size));
     } else {
-      this.buffers[bufferId].slices.push(dataSlice);
+      this.#buffers[bufferId].slices.push(dataSlice);
     }
   }
 
@@ -46,13 +44,13 @@ class BlobManager {
   // Delete the buffer associated to the given bufferId.
   deleteBuffer(bufferId) {
     this.#consoleLog('delete buffer: ' + bufferId)
-    delete this.buffers[bufferId];
+    delete this.#buffers[bufferId];
   }
 
   // Create a Blob from the buffer associated to the given bufferId.
   createBlob(bufferId, type) {
     this.#consoleLog('create blob from buffer id: ' + bufferId)
-    var bufferByteArrays = this.buffers[bufferId].slices;
+    var bufferByteArrays = this.#buffers[bufferId].slices;
 
     var blob = new Blob(bufferByteArrays, { type: type });
     var blobUrl = URL.createObjectURL(blob);
@@ -85,7 +83,7 @@ class BlobManager {
   }
 
   #consoleLog(message) {
-    if (this.enableLogsOption) {
+    if (this.#enableLogsOption) {
       console.log(message);
     }
   }
