@@ -67,10 +67,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <inheritdoc/>
         public async ValueTask<IBlob> CreateBlobAsync(Guid bufferGuid, string type, Func<Stream, ValueTask> writer)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
+            ArgumentNullException.ThrowIfNull(writer);
 
             var bufferGuidStr = bufferGuid.ToString();
 
@@ -99,10 +96,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <inheritdoc/>
         public ValueTask SaveAsFileAsync(IBlob blob, string fileName)
         {
-            if (blob == null)
-            {
-                throw new ArgumentNullException(nameof(blob));
-            }
+            ArgumentNullException.ThrowIfNull(blob);
 
             return Module.InvokeVoidAsync(SaveBlobAsFile, blob.Uri.ToString(), fileName);
         }
@@ -116,10 +110,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <inheritdoc/>
         public ValueTask DisposeBlobAsync(IBlob blob)
         {
-            if (blob == null)
-            {
-                throw new ArgumentNullException(nameof(blob));
-            }
+            ArgumentNullException.ThrowIfNull(blob);
 
             return Module.InvokeVoidAsync(DeleteBlob, blob.Uri.ToString());
         }

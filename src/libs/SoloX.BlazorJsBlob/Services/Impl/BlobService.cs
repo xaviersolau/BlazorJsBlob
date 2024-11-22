@@ -39,10 +39,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <param name="logger">Logger.</param>
         public BlobService(IOptions<BlobServiceOptions> options, IJSRuntime jsRuntime, IBufferService bufferService, ILogger<BlobService> logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            ArgumentNullException.ThrowIfNull(options);
 
             this.options = options.Value;
             this.bufferService = bufferService;
@@ -79,10 +76,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <inheritdoc/>
         public async ValueTask<IBlob> CreateBlobAsync(Stream dataStream, string type)
         {
-            if (dataStream == null)
-            {
-                throw new ArgumentNullException(nameof(dataStream));
-            }
+            ArgumentNullException.ThrowIfNull(dataStream);
 
             return await CreateBlobAsync(
                 async writeStream =>
@@ -95,10 +89,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <inheritdoc/>
         public async ValueTask<IBlob> CreateBlobAsync(Func<Stream, ValueTask> writer, string type)
         {
-            if (writer == null)
-            {
-                throw new ArgumentNullException(nameof(writer));
-            }
+            ArgumentNullException.ThrowIfNull(writer);
 
             this.logger.LogInformation($"Create Blob with type {type}");
 
@@ -116,10 +107,7 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         /// <inheritdoc/>
         public async ValueTask SaveAsFileAsync(IBlob blob, string fileName)
         {
-            if (blob == null)
-            {
-                throw new ArgumentNullException(nameof(blob));
-            }
+            ArgumentNullException.ThrowIfNull(blob);
 
             var moduleStrategy = await this.moduleStrategyTask.Value.ConfigureAwait(false);
 
