@@ -72,19 +72,23 @@ namespace SoloX.BlazorJsBlob.E2ETests
             WebkitBrowser = new Lazy<Task<IBrowser>>(Playwright.Webkit.LaunchAsync(options));
         }
 
+        private static readonly string[] INSTALL_DEPS_ARGUMENTS = new[] { "install-deps" };
+
+        private static readonly string[] INSTALL_ARGUMENTS = new[] { "install" };
+
         /// <summary>
         /// Install and deploy all binaries Playwright may need.
         /// </summary>
         private static void InstallPlaywright()
         {
-            var exitCode = Microsoft.Playwright.Program.Main(new[] { "install-deps" });
+            var exitCode = Microsoft.Playwright.Program.Main(INSTALL_DEPS_ARGUMENTS);
             if (exitCode != 0)
             {
 #pragma warning disable CA2201 // Do not raise reserved exception types
                 throw new Exception($"Playwright exited with code {exitCode} on install-deps");
 #pragma warning restore CA2201 // Do not raise reserved exception types
             }
-            exitCode = Microsoft.Playwright.Program.Main(new[] { "install" });
+            exitCode = Microsoft.Playwright.Program.Main(INSTALL_ARGUMENTS);
             if (exitCode != 0)
             {
 #pragma warning disable CA2201 // Do not raise reserved exception types
