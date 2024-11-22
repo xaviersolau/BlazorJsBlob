@@ -7,21 +7,26 @@
 // ----------------------------------------------------------------------
 
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Playwright;
+using SoloX.CodeQuality.Playwright;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace SoloX.BlazorJsBlob.E2ETests
 {
-    [Collection(PlaywrightFixture.PlaywrightCollection)]
     public class WebAssemblyBlobTest
     {
-        private readonly PlaywrightFixture playwrightFixture;
+        private readonly IPlaywrightTestBuilder builder;
 
-        public WebAssemblyBlobTest(PlaywrightFixture playwrightFixture)
+        public WebAssemblyBlobTest()
         {
-            this.playwrightFixture = playwrightFixture;
+            this.builder = PlaywrightTestBuilder.Create()
+                .WithLocalHost(localHostBuilder =>
+                {
+                    localHostBuilder
+                        .UsePortRange(new PortRange(5000, 6000))
+                        .UseApplication<WebHostTestProgram>();
+                });
         }
 
         [Theory]
@@ -32,38 +37,21 @@ namespace SoloX.BlazorJsBlob.E2ETests
 #endif
         public async Task ItShouldCreateABlobAndSaveIt(Browser browser)
         {
-            var url = PlaywrightFixture.MakeUrl("localhost");
+            var playwrightTest = await this.builder
+                .BuildAsync(browser)
+                .ConfigureAwait(true);
 
-            // Create the host factory with the App class as parameter and the url we are going to use.
-            using var hostFactory = new WebTestingHostFactory<WebHostTestProgram>();
+            await using var _ = playwrightTest.ConfigureAwait(false);
 
-            hostFactory
-                // Override host configuration to mock stuff if required.
-                .WithWebHostBuilder(builder =>
-                {
-                    builder.UseUrls(url);
-                    //builder.ConfigureServices(services =>
-                    //{
-                    //    services.AddTransient<IService, ServiceMock>();
-                    //})
-                    //.ConfigureAppConfiguration((app, conf) =>
-                    //{
-                    //    conf.AddJsonFile("appsettings.Test.json");
-                    //});
-                })
-                // Create the host using the CreateDefaultClient method.
-                .CreateDefaultClient();
-
-            await this.playwrightFixture.GotoPageAsync(
-                url,
+            await playwrightTest.GotoPageAsync(
+                string.Empty,
                 async (page) =>
                 {
-
                     var waitForRequestFinishedTask = page.WaitForRequestFinishedAsync(new PageWaitForRequestFinishedOptions()
                     {
                         Predicate = request =>
                         {
-                            return request.Url == $"{url}/tropical-waterfall.jpg";
+                            return request.Url == $"{playwrightTest.Url}/tropical-waterfall.jpg";
                         },
                     });
 
@@ -104,8 +92,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
                     var count = await strong.CountAsync().ConfigureAwait(false);
                     count.Should().Be(1);
-                },
-                browser).ConfigureAwait(false);
+                }).ConfigureAwait(false);
         }
 
         [Theory]
@@ -116,22 +103,14 @@ namespace SoloX.BlazorJsBlob.E2ETests
 #endif
         public async Task ItShouldSaveUrlAsFile(Browser browser)
         {
-            var url = PlaywrightFixture.MakeUrl("localhost", port: 5000);
+            var playwrightTest = await this.builder
+                .BuildAsync(browser)
+                .ConfigureAwait(true);
 
-            // Create the host factory with the App class as parameter and the url we are going to use.
-            using var hostFactory = new WebTestingHostFactory<WebHostTestProgram>();
+            await using var _ = playwrightTest.ConfigureAwait(false);
 
-            hostFactory
-                // Override host configuration to mock stuff if required.
-                .WithWebHostBuilder(builder =>
-                {
-                    builder.UseUrls(url);
-                })
-                // Create the host using the CreateDefaultClient method.
-                .CreateDefaultClient();
-
-            await this.playwrightFixture.GotoPageAsync(
-                url,
+            await playwrightTest.GotoPageAsync(
+                string.Empty,
                 async (page) =>
                 {
                     // Click text=Save Url.
@@ -143,12 +122,11 @@ namespace SoloX.BlazorJsBlob.E2ETests
                     downloadedFile.Should().NotBeNull();
                     downloadedFile.SuggestedFilename.Should().StartWith("tropical-waterfall").And.EndWith(".jpg");
 
-                    downloadedFile.Url.Should().Be("https://localhost:5000/tropical-waterfall.jpg");
+                    downloadedFile.Url.Should().Be($"{playwrightTest.Url}/tropical-waterfall.jpg");
 
                     var size = await ServerSideBlobTest.GetDownloadedSize(downloadedFile).ConfigureAwait(false);
                     size.Should().Be(2959153);
-                },
-                browser).ConfigureAwait(false);
+                }).ConfigureAwait(false);
         }
     }
 }
