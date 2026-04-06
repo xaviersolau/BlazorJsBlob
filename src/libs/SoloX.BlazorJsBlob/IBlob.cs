@@ -18,7 +18,7 @@ namespace SoloX.BlazorJsBlob
         /// <summary>
         /// Get the Blob Uri.
         /// </summary>
-        public Uri Uri { get; }
+        Uri Uri { get; }
 
         /// <summary>
         /// Blob MIME type.

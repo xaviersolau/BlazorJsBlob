@@ -4,64 +4,18 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  checks: write
+  packages: write
+  pull-requests: write
+
 jobs:
-  build-pr:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 9.0.100
-    - name: Install dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --configuration Release --no-restore --no-build
-
-  coverage-pr:
-    needs: build-pr
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        test_path:
-          - src/tests/SoloX.BlazorJsBlob.UTests
-          - src/tests/SoloX.BlazorJsBlob.ITests
-          #- src/tests/SoloX.BlazorJsBlob.E2ETests
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 9.0.100
-    - name: Install dependencies ${{ matrix.test_path }}
-      run: dotnet restore ${{ matrix.test_path }}
-    - name: Build ${{ matrix.test_path }}
-      run: dotnet build ${{ matrix.test_path }} --configuration Release --no-restore
-    - name: Test Coverage ${{ matrix.test_path }}
-      run: dotnet test ${{ matrix.test_path }} --configuration Release --no-restore --no-build --collect:"XPlat Code Coverage" --settings coverlet.runsettings
-    - name: Moving test results
-      run: mv ${{ matrix.test_path }}/TestResults/**/coverage.cobertura.xml ${{ matrix.test_path }}/TestResults/coverage.cobertura.xml
-    - name: Send to coverals
-      uses: coverallsapp/github-action@v2.2.3
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{ matrix.test_path }}/TestResults/coverage.cobertura.xml
-        format: cobertura
-        flag-name: test-${{ matrix.test_path }}
-        parallel: true
-
-
-  end-coverage-pr:
-    needs: coverage-pr
-    runs-on: ubuntu-latest
-    steps:
-    - name: Finish coverals
-      uses: coverallsapp/github-action@v2.2.3
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        parallel-finished: true
+  build:
+    uses: xaviersolau/devops-workflows/.github/workflows/build-dotnet.yml@v1.1.0
+    with:
+      test-projects: >
+        [
+          "src/tests/SoloX.BlazorJsBlob.UTests",
+          "src/tests/SoloX.BlazorJsBlob.ITests"
+        ]
