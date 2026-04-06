@@ -1,6 +1,6 @@
 ﻿// ----------------------------------------------------------------------
 // <copyright file="BlobService.cs" company="Xavier Solau">
-// Copyright © 2022 Xavier Solau.
+// Copyright © 2022-2026 Xavier Solau.
 // Licensed under the MIT license.
 // See LICENSE file in the project root for full license information.
 // </copyright>
@@ -91,7 +91,10 @@ namespace SoloX.BlazorJsBlob.Services.Impl
         {
             ArgumentNullException.ThrowIfNull(writer);
 
-            this.logger.LogInformation($"Create Blob with type {type}");
+            if (this.logger.IsEnabled(LogLevel.Information))
+            {
+                this.logger.LogInformation($"Create Blob with type {type}");
+            }
 
             var bufferGuid = Guid.NewGuid();
 
@@ -99,7 +102,10 @@ namespace SoloX.BlazorJsBlob.Services.Impl
 
             var blob = await moduleStrategy.CreateBlobAsync(bufferGuid, type, writer).ConfigureAwait(false);
 
-            this.logger.LogInformation($"Blob with type {type} created");
+            if (this.logger.IsEnabled(LogLevel.Information))
+            {
+                this.logger.LogInformation($"Blob with type {type} created");
+            }
 
             return blob;
         }

@@ -63,17 +63,57 @@ class BlobManager {
     URL.revokeObjectURL(blobUrl);
   }
 
-  // Save a Blob matching the blobUrl.
-  saveAsFile(blobUrl, filename) {
-    this.#consoleLog('save blob: ' + blobUrl)
-    var link = document.createElement('a');
-    link.download = filename;
+  // Download Url file.
+  saveAsFile(url, filename) {
+    this.#consoleLog('save url: ' + url)
 
-    link.href = blobUrl;
+    this.#consoleLog('user agent: ' + navigator.userAgent)
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+
+      const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
+      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+
+      const isBrokenDownload = isIOS || isSafari;
+
+      this.#consoleLog('isBrokenDownload: ' + isBrokenDownload)
+
+      if (url.toLowerCase().startsWith("blob:") || !isBrokenDownload) {
+        this.#downloadUrl(url, filename);
+      }
+      else {
+        // no blob && isBrokenDownload
+        fetch(url)
+          .then(res => res.blob())
+          .then(blob => {
+            const urlToSave = URL.createObjectURL(blob);
+
+            this.#downloadUrl(urlToSave, filename);
+
+            // delay revocation slightly to avoid race conditions
+            setTimeout(() => {
+              URL.revokeObjectURL(urlToSave);
+            }, 100);
+          });
+      }
+
+    } catch (err) {
+      this.#consoleError(err);
+
+      window.open(url, '_blank');
+    }
+  }
+
+  #downloadUrl(urlToSave, filename) {
+    const a = document.createElement('a');
+    a.href = urlToSave;
+    a.download = filename;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
   }
 
   // ping method to tell Blazor world that JS interoperability is alive.
@@ -85,6 +125,11 @@ class BlobManager {
   #consoleLog(message) {
     if (this.#enableLogsOption) {
       console.log(message);
+    }
+  }
+  #consoleError(message) {
+    if (this.#enableLogsOption) {
+      console.error(message);
     }
   }
 }

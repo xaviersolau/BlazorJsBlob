@@ -1,6 +1,6 @@
 ﻿// ----------------------------------------------------------------------
 // <copyright file="ServerSideBlobTest.cs" company="Xavier Solau">
-// Copyright © 2022 Xavier Solau.
+// Copyright © 2022-2026 Xavier Solau.
 // Licensed under the MIT license.
 // See LICENSE file in the project root for full license information.
 // </copyright>
@@ -83,7 +83,7 @@ namespace SoloX.BlazorJsBlob.E2ETests
                     var strong = page.Locator("strong", new PageLocatorOptions { HasTextString = "No blob to display!" });
 
                     await strong.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible }).ConfigureAwait(false);
-                }).ConfigureAwait(false);
+                });
         }
 
         [Theory]
@@ -93,6 +93,11 @@ namespace SoloX.BlazorJsBlob.E2ETests
         public async Task ItShouldSaveUrlAsFile(Browser browser)
         {
             var playwrightTest = await this.builder
+                //.WithPlaywrightOptions(opt =>
+                //{
+                //    // Display the browser screen.
+                //    opt.Headless = false;
+                //})
                 .BuildAsync(browser)
                 .ConfigureAwait(true);
 
@@ -111,11 +116,9 @@ namespace SoloX.BlazorJsBlob.E2ETests
                     downloadedFile.Should().NotBeNull();
                     downloadedFile.SuggestedFilename.Should().StartWith("tropical-waterfall").And.EndWith(".jpg");
 
-                    downloadedFile.Url.Should().Be($"{playwrightTest.Url}/tropical-waterfall.jpg");
-
                     var size = await GetDownloadedSize(downloadedFile).ConfigureAwait(false);
                     size.Should().Be(2959153);
-                }).ConfigureAwait(false);
+                });
         }
 
         internal static async Task<int> GetDownloadedSize(IDownload downloadedFile)
