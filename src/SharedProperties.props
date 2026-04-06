@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Version>1.1.0</Version>
     <Authors>Xavier Solau</Authors>
-    <Copyright>Copyright © 2022 Xavier Solau</Copyright>
+    <Copyright>Copyright © 2022-2026 Xavier Solau</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/xaviersolau/BlazorJsBlob</PackageProjectUrl>
     <RepositoryUrl>https://github.com/xaviersolau/BlazorJsBlob.git</RepositoryUrl>

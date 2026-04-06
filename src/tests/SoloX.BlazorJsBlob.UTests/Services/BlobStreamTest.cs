@@ -1,6 +1,6 @@
 ﻿// ----------------------------------------------------------------------
 // <copyright file="BlobStreamTest.cs" company="Xavier Solau">
-// Copyright © 2022 Xavier Solau.
+// Copyright © 2022-2026 Xavier Solau.
 // Licensed under the MIT license.
 // See LICENSE file in the project root for full license information.
 // </copyright>
@@ -56,7 +56,7 @@ namespace SoloX.BlazorJsBlob.UTests.Services
 #pragma warning restore CA2000 // Dispose objects before losing scope
             await using (stream.ConfigureAwait(false))
             {
-                await stream.WriteAsync(source).ConfigureAwait(false);
+                await stream.WriteAsync(source);
             }
 
             memStream.Position = 0;

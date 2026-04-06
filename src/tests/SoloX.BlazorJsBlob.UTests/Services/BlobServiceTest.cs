@@ -1,6 +1,6 @@
-// ----------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------
 // <copyright file="BlobServiceTest.cs" company="Xavier Solau">
-// Copyright � 2022 Xavier Solau.
+// Copyright © 2022-2026 Xavier Solau.
 // Licensed under the MIT license.
 // See LICENSE file in the project root for full license information.
 // </copyright>
@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Microsoft.JSInterop.Infrastructure;
 using Moq;
+using SoloX.BlazorJsBlob.Services;
 using SoloX.BlazorJsBlob.Services.Impl;
 using SoloX.CodeQuality.Test.Helpers.XUnit.Logger;
 using System;
@@ -96,7 +97,7 @@ namespace SoloX.BlazorJsBlob.UTests
             var service = SetupBlobService(sliceBufferSize, jsObjectReferenceMock);
             await using var _1 = service.ConfigureAwait(false);
 
-            var blob = await service.CreateBlobAsync(buffer, type).ConfigureAwait(false);
+            var blob = await service.CreateBlobAsync(buffer, type);
             await using var _2 = blob.ConfigureAwait(false);
 
             // Make sure the buffer is created and a Guid has been defined
@@ -171,7 +172,7 @@ namespace SoloX.BlazorJsBlob.UTests
             var service = SetupBlobService(1024, jsObjectReferenceMock);
             await using var _2 = service.ConfigureAwait(false);
 
-            await service.SaveAsFileAsync(blobMock.Object, fileName).ConfigureAwait(false);
+            await service.SaveAsFileAsync(blobMock.Object, fileName);
 
             jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.SaveBlobAsFile,
@@ -187,7 +188,7 @@ namespace SoloX.BlazorJsBlob.UTests
         [InlineData("http://my.url/fileName.Json", null, "fileName.Json")]
         [InlineData("http://my.url/fileName.Json?var1=1&var2=2", null, "fileName.Json")]
         [InlineData("fileName.Json", null, "fileName.Json")]
-        public async Task ItShouldSaveAsUrlAsync(string url, string fileName, string expectedFileName)
+        public async Task ItShouldSaveAsUrlAsync(string url, string? fileName, string expectedFileName)
         {
             var type = "application/json";
 
@@ -196,7 +197,7 @@ namespace SoloX.BlazorJsBlob.UTests
             var service = SetupBlobService(1024, jsObjectReferenceMock);
             await using var _ = service.ConfigureAwait(false);
 
-            await service.SaveAsFileAsync(url, fileName).ConfigureAwait(false);
+            await service.SaveAsFileAsync(url, fileName);
 
             jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.SaveBlobAsFile,
@@ -230,7 +231,7 @@ namespace SoloX.BlazorJsBlob.UTests
             var service = SetupBlobService(1024, jsObjectReferenceMock);
             await using var _2 = service.ConfigureAwait(false);
 
-            var blob = await service.CreateBlobAsync(buffer, type).ConfigureAwait(false);
+            var blob = await service.CreateBlobAsync(buffer, type);
 
             // Make sure the JS Blob has not been delete
             jsObjectReferenceMock
@@ -241,7 +242,7 @@ namespace SoloX.BlazorJsBlob.UTests
                         && objs[0].ToString() == blobUrl)),
                     Times.Never());
 
-            await blob.DisposeAsync().ConfigureAwait(false);
+            await blob.DisposeAsync();
 
             // Make sure the JS Blob has been delete
             jsObjectReferenceMock

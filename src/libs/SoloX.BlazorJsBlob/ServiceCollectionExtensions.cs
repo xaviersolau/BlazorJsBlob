@@ -1,12 +1,13 @@
 ﻿// ----------------------------------------------------------------------
 // <copyright file="ServiceCollectionExtensions.cs" company="Xavier Solau">
-// Copyright © 2022 Xavier Solau.
+// Copyright © 2022-2026 Xavier Solau.
 // Licensed under the MIT license.
 // See LICENSE file in the project root for full license information.
 // </copyright>
 // ----------------------------------------------------------------------
 
 using Microsoft.Extensions.DependencyInjection;
+using SoloX.BlazorJsBlob.Services;
 using SoloX.BlazorJsBlob.Services.Impl;
 using System;
 
