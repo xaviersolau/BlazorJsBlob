@@ -14,14 +14,13 @@ using Microsoft.JSInterop.Infrastructure;
 using Moq;
 using SoloX.BlazorJsBlob.Services;
 using SoloX.BlazorJsBlob.Services.Impl;
-using SoloX.CodeQuality.Test.Helpers.XUnit.Logger;
+using SoloX.CodeQuality.Test.Helpers.XUnit.V3.Logger;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace SoloX.BlazorJsBlob.UTests
 {
