@@ -10,10 +10,9 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Moq;
-using SoloX.CodeQuality.Test.Helpers.XUnit;
+using SoloX.CodeQuality.Test.Helpers.XUnit.V3;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace SoloX.BlazorJsBlob.ITests
 {
