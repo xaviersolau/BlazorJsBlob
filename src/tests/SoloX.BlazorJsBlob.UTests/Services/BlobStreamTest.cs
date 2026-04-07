@@ -6,7 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------
 
-using FluentAssertions;
+using Shouldly;
 using Microsoft.JSInterop;
 using Microsoft.JSInterop.Infrastructure;
 using Moq;
@@ -60,7 +60,7 @@ namespace SoloX.BlazorJsBlob.UTests.Services
             }
 
             memStream.Position = 0;
-            memStream.ToArray().Should().BeEquivalentTo(source);
+            memStream.ToArray().ShouldBeEquivalentTo(source);
         }
     }
 }
