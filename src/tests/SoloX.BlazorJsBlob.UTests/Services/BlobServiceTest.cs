@@ -6,7 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------
 
-using FluentAssertions;
+using Shouldly;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
@@ -53,7 +53,7 @@ namespace SoloX.BlazorJsBlob.UTests
 
             // Setup the stream to write to the JS Blob.
             var bufferArray = SetupStreamcontent(bufferSize);
-            var buffer = new MemoryStream(bufferArray);
+            var buffer = new MemoryStream(bufferArray.ToArray());
             await using var _ = buffer.ConfigureAwait(false);
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
@@ -100,11 +100,11 @@ namespace SoloX.BlazorJsBlob.UTests
             await using var _2 = blob.ConfigureAwait(false);
 
             // Make sure the buffer is created and a Guid has been defined
-            blobId.Should().NotBe(Guid.Empty);
+            blobId.ShouldNotBe(Guid.Empty);
 
             // Make sure the resulting blob is registered with the right parameters.
-            blob.Uri.ToString().Should().Be(blobUrl);
-            blob.Type.Should().Be(type);
+            blob.Uri.ToString().ShouldBe(blobUrl);
+            blob.Type.ShouldBe(type);
 
             // Make sure the slices are properly sent to the JS layer.
             jsObjectReferenceMock
@@ -137,8 +137,8 @@ namespace SoloX.BlazorJsBlob.UTests
                     Times.Exactly((restSize > 0) ? sliceCount + 1 : sliceCount));
 
             // Make sure the stream is correctly sent to the JS buffer.
-            copiedContent.Count.Should().Be(bufferSize);
-            copiedContent.Should().BeEquivalentTo(bufferArray);
+            copiedContent.Count.ShouldBe(bufferSize);
+            copiedContent.ShouldBeEquivalentTo(bufferArray);
 
             // Make sure the buffer has been delete
             jsObjectReferenceMock
@@ -159,7 +159,7 @@ namespace SoloX.BlazorJsBlob.UTests
 
             // Setup the stream to write to the JS Blob.
             var bufferArray = SetupStreamcontent(1024);
-            var buffer = new MemoryStream(bufferArray);
+            var buffer = new MemoryStream(bufferArray.ToArray());
             await using var _1 = buffer.ConfigureAwait(false);
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
@@ -215,7 +215,7 @@ namespace SoloX.BlazorJsBlob.UTests
 
             // Setup the stream to write to the JS Blob.
             var bufferArray = SetupStreamcontent(1024);
-            var buffer = new MemoryStream(bufferArray);
+            var buffer = new MemoryStream(bufferArray.ToArray());
             await using var _1 = buffer.ConfigureAwait(false);
 
             var jsObjectReferenceMock = new Mock<IJSObjectReference>();
@@ -275,7 +275,7 @@ namespace SoloX.BlazorJsBlob.UTests
             return service;
         }
 
-        private static byte[] SetupStreamcontent(int bufferSize)
+        private static List<byte> SetupStreamcontent(int bufferSize)
         {
             var bufferArray = new byte[bufferSize];
 
@@ -286,7 +286,7 @@ namespace SoloX.BlazorJsBlob.UTests
 #pragma warning restore CA5394 // Do not use insecure randomness
             }
 
-            return bufferArray;
+            return bufferArray.ToList();
         }
     }
 }

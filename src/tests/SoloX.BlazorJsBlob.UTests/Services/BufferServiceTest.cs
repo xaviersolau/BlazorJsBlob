@@ -6,7 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------
 
-using FluentAssertions;
+using Shouldly;
 using SoloX.BlazorJsBlob.Services.Impl;
 using Xunit;
 
@@ -26,8 +26,8 @@ namespace SoloX.BlazorJsBlob.UTests.Services
 
             var buffer = service.Rent(size);
 
-            buffer.Should().NotBeNull();
-            buffer.Length.Should().BeGreaterThanOrEqualTo(size);
+            buffer.ShouldNotBeNull();
+            buffer.Length.ShouldBeGreaterThanOrEqualTo(size);
 
             service.Return(buffer);
         }

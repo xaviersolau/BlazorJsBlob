@@ -6,7 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------
 
-using FluentAssertions;
+using Shouldly;
 using Microsoft.Playwright;
 using SoloX.BlazorJsBlob.Example.ServerSide;
 using SoloX.CodeQuality.Playwright;
@@ -57,11 +57,11 @@ namespace SoloX.BlazorJsBlob.E2ETests
 
                     var embedSrc = await embed.GetAttributeAsync("src").ConfigureAwait(false);
 
-                    embedSrc.Should().StartWith("blob:");
+                    embedSrc.ShouldStartWith("blob:");
 
                     var embedType = await embed.GetAttributeAsync("type").ConfigureAwait(false);
 
-                    embedType.Should().Be("image/jpeg");
+                    embedType.ShouldBe("image/jpeg");
 
                     // Click text=Save Blob
                     var downloadedFile = await page.RunAndWaitForDownloadAsync(async () =>
@@ -69,13 +69,16 @@ namespace SoloX.BlazorJsBlob.E2ETests
                         await page.Locator("text=Save Blob").ClickAsync().ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
-                    downloadedFile.Should().NotBeNull();
-                    downloadedFile.SuggestedFilename.Should().StartWith("tropical-waterfall").And.EndWith(".jpg");
+                    downloadedFile.ShouldNotBeNull();
+                    downloadedFile.SuggestedFilename
+                        .ShouldSatisfyAllConditions(
+                            fn => fn.ShouldStartWith("tropical-waterfall"),
+                            fn => fn.ShouldEndWith(".jpg"));
 
-                    downloadedFile.Url.Should().Be(embedSrc);
+                    downloadedFile.Url.ShouldBe(embedSrc);
 
                     var size = await GetDownloadedSize(downloadedFile).ConfigureAwait(false);
-                    size.Should().Be(2959153);
+                    size.ShouldBe(2959153);
 
                     // Click text=Delete Blob
                     await page.Locator("text=Delete Blob").ClickAsync().ConfigureAwait(false);
@@ -113,11 +116,14 @@ namespace SoloX.BlazorJsBlob.E2ETests
                         await page.Locator("text=Download Url").ClickAsync().ConfigureAwait(false);
                     }).ConfigureAwait(false);
 
-                    downloadedFile.Should().NotBeNull();
-                    downloadedFile.SuggestedFilename.Should().StartWith("tropical-waterfall").And.EndWith(".jpg");
+                    downloadedFile.ShouldNotBeNull();
+                    downloadedFile.SuggestedFilename
+                        .ShouldSatisfyAllConditions(
+                            fn => fn.ShouldStartWith("tropical-waterfall"),
+                            fn => fn.ShouldEndWith(".jpg"));
 
                     var size = await GetDownloadedSize(downloadedFile).ConfigureAwait(false);
-                    size.Should().Be(2959153);
+                    size.ShouldBe(2959153);
                 });
         }
 

@@ -6,7 +6,7 @@
 // </copyright>
 // ----------------------------------------------------------------------
 
-using FluentAssertions;
+using Shouldly;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Moq;
@@ -39,7 +39,7 @@ namespace SoloX.BlazorJsBlob.ITests
 
             var blobService = serviceProvider.GetRequiredService<IBlobService>();
 
-            blobService.Should().NotBeNull();
+            blobService.ShouldNotBeNull();
         }
     }
 }
