@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Microsoft.JSInterop.Infrastructure;
-using Moq;
+using NSubstitute;
 using SoloX.BlazorJsBlob.Services;
 using SoloX.BlazorJsBlob.Services.Impl;
 using SoloX.CodeQuality.Test.Helpers.XUnit.V3.Logger;
@@ -56,30 +56,34 @@ namespace SoloX.BlazorJsBlob.UTests
             var buffer = new MemoryStream(bufferArray.ToArray());
             await using var _ = buffer.ConfigureAwait(false);
 
-            var jsObjectReferenceMock = new Mock<IJSObjectReference>();
+            var jsObjectReferenceMock = Substitute.For<IJSObjectReference>();
 
             // Get the GUID used to identify the Blob buffer.
             var blobId = Guid.Empty;
+
             jsObjectReferenceMock
-                .Setup(x => x.InvokeAsync<IJSVoidResult>(
+                .When(x => x.InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.CreateBuffer,
-                    It.Is<object[]>(objs => objs.Length == 1)))
-                .Callback<string, object[]>((_, args) =>
+                    Arg.Is<object[]>(objs => objs.Length == 1)))
+                .Do(ci =>
                 {
+                    var args = ci.Arg<object[]>();
                     blobId = Guid.Parse(args[0].ToString());
                 });
 
             // Make a copy of what is actually sent to the Blob.
             var copiedContent = new List<byte>();
 
-            jsObjectReferenceMock.Setup(x => x.InvokeAsync<IJSVoidResult>(
-                AModuleStrategy<IJSObjectReference>.AddToBuffer, It.Is<object[]>(
+            jsObjectReferenceMock.When(x => x.InvokeAsync<IJSVoidResult>(
+                AModuleStrategy<IJSObjectReference>.AddToBuffer, Arg.Is<object[]>(
                         objs => objs.Length == 3
                         && Guid.Parse(objs[0].ToString()) == blobId
                         && objs[1].GetType() == typeof(byte[])
                         && objs[2].GetType() == typeof(int))))
-                .Callback<string, object[]>((_, args) =>
+                .Do(ci =>
                 {
+                    var args = ci.Arg<object[]>();
+
                     var slice = (byte[])args[1];
                     var size = (int)args[2];
 
@@ -87,11 +91,10 @@ namespace SoloX.BlazorJsBlob.UTests
                 });
 
             // Mock the CreateBlob returned Url.
-            jsObjectReferenceMock
-                .Setup(x => x.InvokeAsync<string>(
+            jsObjectReferenceMock.InvokeAsync<string>(
                     AModuleStrategy<IJSObjectReference>.CreateBlob,
-                    It.Is<object[]>(objs => objs.Length == 2 && Guid.Parse(objs[0].ToString()) == blobId && type.Equals(objs[1]))))
-                .ReturnsAsync(blobUrl);
+                    Arg.Is<object[]>(objs => objs.Length == 2 && Guid.Parse(objs[0].ToString()) == blobId && type.Equals(objs[1])))
+                .Returns(blobUrl);
 
             var service = SetupBlobService(sliceBufferSize, jsObjectReferenceMock);
             await using var _1 = service.ConfigureAwait(false);
@@ -107,47 +110,47 @@ namespace SoloX.BlazorJsBlob.UTests
             blob.Type.ShouldBe(type);
 
             // Make sure the slices are properly sent to the JS layer.
-            jsObjectReferenceMock
-                .Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received(sliceCount)
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.AddToBuffer,
-                    It.Is<object[]>(
+                    Arg.Is<object[]>(
                         objs => objs.Length == 3
                         && Guid.Parse(objs[0].ToString()) == blobId
                         && objs[1].GetType() == typeof(byte[])
-                        && sliceBufferSize == (int)objs[2])),
-                    Times.Exactly(sliceCount));
+                        && sliceBufferSize == (int)objs[2]));
 
             if (restSize > 0)
             {
-                jsObjectReferenceMock
-                    .Verify(x => x.InvokeAsync<IJSVoidResult>(
+                await jsObjectReferenceMock
+                    .Received()
+                    .InvokeAsync<IJSVoidResult>(
                         AModuleStrategy<IJSObjectReference>.AddToBuffer,
-                        It.Is<object[]>(
+                        Arg.Is<object[]>(
                             objs => objs.Length == 3
                             && Guid.Parse(objs[0].ToString()) == blobId
                             && objs[1].GetType() == typeof(byte[])
-                            && restSize == (int)objs[2])),
-                        Times.Once());
+                            && restSize == (int)objs[2]));
             }
 
-            jsObjectReferenceMock
-                .Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received((restSize > 0) ? sliceCount + 1 : sliceCount)
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.AddToBuffer,
-                    It.IsAny<object[]>()),
-                    Times.Exactly((restSize > 0) ? sliceCount + 1 : sliceCount));
+                    Arg.Any<object[]>());
 
             // Make sure the stream is correctly sent to the JS buffer.
             copiedContent.Count.ShouldBe(bufferSize);
             copiedContent.ShouldBeEquivalentTo(bufferArray);
 
             // Make sure the buffer has been delete
-            jsObjectReferenceMock
-                .Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received()
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.DeleteBuffer,
-                    It.Is<object[]>(
+                    Arg.Is<object[]>(
                         objs => objs.Length == 1
-                        && Guid.Parse(objs[0].ToString()) == blobId)),
-                    Times.Once());
+                        && Guid.Parse(objs[0].ToString()) == blobId));
         }
 
         [Fact]
@@ -162,24 +165,26 @@ namespace SoloX.BlazorJsBlob.UTests
             var buffer = new MemoryStream(bufferArray.ToArray());
             await using var _1 = buffer.ConfigureAwait(false);
 
-            var jsObjectReferenceMock = new Mock<IJSObjectReference>();
+            var jsObjectReferenceMock = Substitute.For<IJSObjectReference>();
 
-            var blobMock = new Mock<IBlob>();
-            blobMock.SetupGet(b => b.Uri).Returns(new Uri(blobUrl));
-            blobMock.SetupGet(b => b.Type).Returns(type);
+            var blobMock = Substitute.For<IBlob>();
+
+            blobMock.Uri.Returns(new Uri(blobUrl));
+            blobMock.Type.Returns(type);
 
             var service = SetupBlobService(1024, jsObjectReferenceMock);
             await using var _2 = service.ConfigureAwait(false);
 
-            await service.SaveAsFileAsync(blobMock.Object, fileName);
+            await service.SaveAsFileAsync(blobMock, fileName);
 
-            jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received()
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.SaveBlobAsFile,
-                    It.Is<object[]>(
+                    Arg.Is<object[]>(
                         objs => objs.Length == 2
                         && objs[0].ToString() == blobUrl
-                        && objs[1].ToString() == fileName)),
-                    Times.Once());
+                        && objs[1].ToString() == fileName));
         }
 
         [Theory]
@@ -191,20 +196,21 @@ namespace SoloX.BlazorJsBlob.UTests
         {
             var type = "application/json";
 
-            var jsObjectReferenceMock = new Mock<IJSObjectReference>();
+            var jsObjectReferenceMock = Substitute.For<IJSObjectReference>();
 
             var service = SetupBlobService(1024, jsObjectReferenceMock);
             await using var _ = service.ConfigureAwait(false);
 
             await service.SaveAsFileAsync(url, fileName);
 
-            jsObjectReferenceMock.Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received()
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.SaveBlobAsFile,
-                    It.Is<object[]>(
+                    Arg.Is<object[]>(
                         objs => objs.Length == 2
                         && objs[0].ToString() == url
-                        && objs[1].ToString() == expectedFileName)),
-                    Times.Once());
+                        && objs[1].ToString() == expectedFileName));
         }
 
         [Fact]
@@ -218,14 +224,14 @@ namespace SoloX.BlazorJsBlob.UTests
             var buffer = new MemoryStream(bufferArray.ToArray());
             await using var _1 = buffer.ConfigureAwait(false);
 
-            var jsObjectReferenceMock = new Mock<IJSObjectReference>();
+            var jsObjectReferenceMock = Substitute.For<IJSObjectReference>();
 
             // Mock the CreateBlob returned Url.
             jsObjectReferenceMock
-                .Setup(x => x.InvokeAsync<string>(
+                .InvokeAsync<string>(
                     AModuleStrategy<IJSObjectReference>.CreateBlob,
-                    It.Is<object[]>(objs => objs.Length == 2 && Guid.Parse(objs[0].ToString()) != Guid.Empty && type.Equals(objs[1]))))
-                .ReturnsAsync(blobUrl);
+                    Arg.Is<object[]>(objs => objs.Length == 2 && Guid.Parse(objs[0].ToString()) != Guid.Empty && type.Equals(objs[1])))
+                .Returns(blobUrl);
 
             var service = SetupBlobService(1024, jsObjectReferenceMock);
             await using var _2 = service.ConfigureAwait(false);
@@ -233,45 +239,48 @@ namespace SoloX.BlazorJsBlob.UTests
             var blob = await service.CreateBlobAsync(buffer, type);
 
             // Make sure the JS Blob has not been delete
-            jsObjectReferenceMock
-                .Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received(0)
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.DeleteBlob,
-                    It.Is<object[]>(
+                    Arg.Is<object[]>(
                         objs => objs.Length == 1
-                        && objs[0].ToString() == blobUrl)),
-                    Times.Never());
+                        && objs[0].ToString() == blobUrl));
 
             await blob.DisposeAsync();
 
             // Make sure the JS Blob has been delete
-            jsObjectReferenceMock
-                .Verify(x => x.InvokeAsync<IJSVoidResult>(
+            await jsObjectReferenceMock
+                .Received()
+                .InvokeAsync<IJSVoidResult>(
                     AModuleStrategy<IJSObjectReference>.DeleteBlob,
-                    It.Is<object[]>(
+                    Arg.Is<object[]>(
                         objs => objs.Length == 1
-                        && objs[0].ToString() == blobUrl)),
-                    Times.Once());
+                        && objs[0].ToString() == blobUrl));
         }
 
-        private BlobService SetupBlobService(int sliceBufferSize, Mock<IJSObjectReference> jsObjectReferenceMock)
+        private BlobService SetupBlobService(int sliceBufferSize, IJSObjectReference jsObjectReferenceMock)
         {
-            var bufferService = new Mock<IBufferService>();
-            bufferService.Setup(s => s.Rent(It.IsAny<int>())).Returns<int>(s => new byte[s]);
+            var bufferService = Substitute.For<IBufferService>();
+            bufferService.Rent(Arg.Any<int>())
+                .Returns(ci => new byte[ci.Arg<int>()]);
 
-            var jsRuntimeMock = new Mock<IJSRuntime>();
+            var jsRuntimeMock = Substitute.For<IJSRuntime>();
             jsRuntimeMock
-                .Setup(x => x.InvokeAsync<IJSObjectReference>(BlobService.Import, new[] { BlobService.BlobManagerJsInteropFile }))
-                .ReturnsAsync(jsObjectReferenceMock.Object);
+                .InvokeAsync<IJSObjectReference>(
+                    BlobService.Import,
+                    Arg.Is<object?[]?>(args => args != null && BlobService.BlobManagerJsInteropFile.Equals(args.SingleOrDefault())))
+                .Returns(jsObjectReferenceMock);
 
             var options = new BlobServiceOptions
             {
                 SliceBufferSize = sliceBufferSize,
             };
 
-            var optionsMock = new Mock<IOptions<BlobServiceOptions>>();
+            var optionsMock = Substitute.For<IOptions<BlobServiceOptions>>();
 
-            optionsMock.SetupGet(o => o.Value).Returns(options);
-            var service = new BlobService(optionsMock.Object, jsRuntimeMock.Object, bufferService.Object, Logger);
+            optionsMock.Value.Returns(options);
+            var service = new BlobService(optionsMock, jsRuntimeMock, bufferService, Logger);
             return service;
         }
 

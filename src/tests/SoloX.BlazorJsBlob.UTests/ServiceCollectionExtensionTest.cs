@@ -7,7 +7,7 @@
 // ----------------------------------------------------------------------
 
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
+using NSubstitute;
 using Xunit;
 
 namespace SoloX.BlazorJsBlob.UTests
@@ -20,14 +20,13 @@ namespace SoloX.BlazorJsBlob.UTests
         [InlineData(ServiceLifetime.Transient)]
         public void ItShouldSetupServiceCollectionWithBlogService(ServiceLifetime serviceLifetime)
         {
-            var servicesMock = new Mock<IServiceCollection>();
+            var servicesMock = Substitute.For<IServiceCollection>();
 
-            var services = servicesMock.Object;
+            var services = servicesMock;
 
             services.AddJsBlob(serviceLifetime);
 
-            servicesMock.Verify(x => x.Add(It.Is<ServiceDescriptor>(d => d.Lifetime == serviceLifetime && d.ServiceType == typeof(IBlobService))), Times.Once());
+            servicesMock.Received().Add(Arg.Is<ServiceDescriptor>(d => d.Lifetime == serviceLifetime && d.ServiceType == typeof(IBlobService)));
         }
-
     }
 }

@@ -9,7 +9,7 @@
 using Shouldly;
 using Microsoft.JSInterop;
 using Microsoft.JSInterop.Infrastructure;
-using Moq;
+using NSubstitute;
 using SoloX.BlazorJsBlob.Services.Impl;
 using System.IO;
 using System.Threading.Tasks;
@@ -37,22 +37,24 @@ namespace SoloX.BlazorJsBlob.UTests.Services
 
             var bufferService = new BufferService();
 
-            var jsReferenceMock = new Mock<IJSObjectReference>();
+            var jsReferenceMock = Substitute.For<IJSObjectReference>();
 
             var id = "abc123";
 
 
             var memStream = new MemoryStream();
 
-            jsReferenceMock.Setup(x => x.InvokeAsync<IJSVoidResult>(
-                    AModuleStrategy<IJSObjectReference>.AddToBuffer, It.Is<object?[]?>(x => x.Length == 3)))
-                .Callback<string, object?[]?>((funcName, args) =>
+            jsReferenceMock.When(x => x.InvokeAsync<IJSVoidResult>(
+                    AModuleStrategy<IJSObjectReference>.AddToBuffer, Arg.Is<object?[]?>(x => x.Length == 3)))
+                .Do(ci =>
                 {
+                    var funcName = ci.Arg<string>();
+                    var args = ci.Arg<object?[]?>();
                     memStream.Write((byte[])args[1], 0, (int)args[2]);
                 });
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-            var stream = new ModuleStrategy.BlobStream(bufferService, sliceBufferSize, jsReferenceMock.Object, id);
+            var stream = new ModuleStrategy.BlobStream(bufferService, sliceBufferSize, jsReferenceMock, id);
 #pragma warning restore CA2000 // Dispose objects before losing scope
             await using (stream.ConfigureAwait(false))
             {

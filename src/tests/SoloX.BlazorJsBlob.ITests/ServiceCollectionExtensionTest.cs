@@ -9,7 +9,7 @@
 using Shouldly;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using Moq;
+using NSubstitute;
 using SoloX.CodeQuality.Test.Helpers.XUnit.V3;
 using System.Threading.Tasks;
 using Xunit;
@@ -29,7 +29,7 @@ namespace SoloX.BlazorJsBlob.ITests
         {
             var services = new ServiceCollection();
 
-            services.AddSingleton(Mock.Of<IJSRuntime>());
+            services.AddSingleton(Substitute.For<IJSRuntime>());
             services.AddTestLogging(this.testOutputHelper);
 
             services.AddJsBlob();
